@@ -1,3 +1,5 @@
+"""Dashboard Streamlit sobre educação brasileira com dados do INEP e API do X."""
+
 from __future__ import annotations
 
 import os
@@ -18,6 +20,7 @@ st.set_page_config(
 st.title("Dashboard Interativo sobre Educação Brasileira")
 st.caption("Grupo 6 – Atividade 06 • Integração Censo Escolar INEP + X (Twitter)")
 
+# Constantes principais para configuração do app.
 X_API_ENDPOINT = "https://api.x.com/2/tweets/search/recent"
 INEP_COLUMNS = [
     "NO_ENTIDADE",
@@ -35,6 +38,7 @@ INEP_COLUMNS = [
 DEPENDENCIA_MAP = {1: "Federal", 2: "Estadual", 3: "Municipal", 4: "Privada"}
 
 
+# Persistência simples para manter o dataframe carregado entre interações.
 if "df_censo" not in st.session_state:
     st.session_state["df_censo"] = None
 
@@ -56,6 +60,7 @@ def _read_credential(env_name: str, secret_key: str) -> str:
 
 
 def _normalise_columns(frame: pd.DataFrame) -> pd.DataFrame:
+    """Valida e padroniza as colunas relevantes do INEP."""
     missing = [col for col in INEP_COLUMNS if col not in frame.columns]
     if missing:
         raise KeyError(
@@ -90,6 +95,7 @@ def _normalise_columns(frame: pd.DataFrame) -> pd.DataFrame:
 
 @st.cache_data(show_spinner=False)
 def load_csv(file: Optional[object], encoding: str, delimiter: str) -> pd.DataFrame:
+    """Carrega o CSV informado e devolve apenas as colunas de interesse."""
     if file is None:
         raise FileNotFoundError("Nenhum arquivo CSV foi fornecido.")
 
@@ -101,6 +107,7 @@ def load_csv(file: Optional[object], encoding: str, delimiter: str) -> pd.DataFr
 
 
 def fetch_tweets(token: str, query: str, max_results: int) -> pd.DataFrame:
+    """Busca tweets recentes utilizando o endpoint search da API do X."""
     headers = {"Authorization": f"Bearer {token}", "User-Agent": "Grupo6Ativ06/1.0"}
     params = {
         "query": query,
@@ -133,6 +140,7 @@ def fetch_tweets(token: str, query: str, max_results: int) -> pd.DataFrame:
 
 
 def sentimento_regra(texto: str) -> str:
+    """Classifica sentimento de forma simplificada via palavras-chave."""
     texto = texto.lower()
     positivos = [
         "excelente",
@@ -167,6 +175,7 @@ def sentimento_regra(texto: str) -> str:
 
 
 def plot_matriculas(df: pd.DataFrame) -> None:
+    """Exibe gráfico de matrículas totais por UF por etapa de ensino."""
     df_uf = (
         df.groupby("SG_UF")[["QT_MAT_FUND", "QT_MAT_MED", "QT_MAT_BAS"]]
         .sum()
@@ -182,6 +191,7 @@ def plot_matriculas(df: pd.DataFrame) -> None:
 
 
 def plot_infra(df: pd.DataFrame) -> None:
+    """Mostra mapa de calor com a infraestrutura média disponível por UF."""
     infra_cols = [
         "IN_BIBLIOTECA",
         "IN_INTERNET",
@@ -204,6 +214,7 @@ def plot_infra(df: pd.DataFrame) -> None:
 
 
 def plot_dependencia(df: pd.DataFrame) -> None:
+    """Soma matrículas e apresenta distribuição por dependência administrativa."""
     mat_dep = df.groupby("TP_DEPENDENCIA")["QT_MAT_BAS"].sum().reset_index()
     fig = px.bar(
         mat_dep,
@@ -218,6 +229,7 @@ def plot_dependencia(df: pd.DataFrame) -> None:
 
 st.sidebar.header("Configurações do Censo Escolar")
 with st.sidebar.expander("Seleção do CSV", expanded=True):
+    # O usuário pode enviar arquivo ou informar caminho local.
     uploaded = st.file_uploader(
         "Envie o arquivo CSV do INEP",
         type=["csv"],
@@ -236,6 +248,7 @@ entrada_csv = uploaded if uploaded is not None else (csv_path or None)
 
 if carregar_censo:
     try:
+        # Persistimos dados e encoding para uso após outras interações.
         df_censo = load_csv(entrada_csv, encoding, delimiter)
         st.session_state["df_censo"] = df_censo
         st.session_state["censo_encoding"] = encoding
@@ -250,6 +263,7 @@ df_censo = st.session_state.get("df_censo")
 encoding_atual = st.session_state.get("censo_encoding", encoding)
 
 if df_censo is not None:
+    # Visão geral dos dados carregados.
     st.subheader("Visão Geral do Censo Escolar")
     st.dataframe(df_censo.head(20))
 
@@ -270,6 +284,7 @@ if df_censo is not None:
     plot_dependencia(df_censo)
 
     with st.expander("Filtrar por município"):
+        # Seleciona município e permite baixar o subconjunto correspondente.
         municipio = st.selectbox(
             "Município", df_censo["NO_MUNICIPIO"].sort_values().unique()
         )
@@ -288,6 +303,7 @@ else:
 
 st.sidebar.header("Configurações do X (Twitter)")
 with st.sidebar.expander("Consulta de tweets", expanded=False):
+    # Token vem de variável de ambiente ou de st.secrets.
     default_token = _read_credential("X_BEARER_TOKEN", "x_bearer_token")
     token = st.text_input(
         "Token Bearer",
@@ -310,6 +326,7 @@ if buscar_tweets:
         st.warning("Informe um token válido da API do X.")
     else:
         try:
+            # Realiza consulta, aplica sentimento básico e exibe resultados.
             tweets_df = fetch_tweets(token, query, quantidade)
             if tweets_df.empty:
                 st.info("Nenhum tweet retornado para a consulta.")
