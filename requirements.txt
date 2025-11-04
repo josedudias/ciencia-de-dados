@@ -1,0 +1,55 @@
+# Requisitos do Projeto - Atividade 06 - Grupo 6
+# Dashboard Interativo sobre Educação Brasileira
+
+# Manipulação de Dados
+pandas>=1.3.0
+numpy>=1.21.0
+
+# Visualização Estática
+matplotlib>=3.4.0
+seaborn>=0.11.0
+
+# Visualização Interativa
+plotly>=5.0.0
+
+# Processamento de Linguagem Natural (NLP)
+nltk>=3.6.0
+wordcloud>=1.8.0
+spacy>=3.5.0
+
+# Aplicação Web
+streamlit>=1.32.0
+
+# API do Twitter/X (para coleta de dados reais)
+tweepy>=4.14.0
+snscrape>=0.7.0
+
+# Análise de Sentimento Avançada (opcional)
+transformers>=4.30.0
+
+# Análise Geoespacial
+geopandas>=0.10.0
+folium>=0.12.0
+
+# Importação/Exportação de Dados
+openpyxl>=3.0.0
+
+# Dependências adicionais
+scikit-learn>=0.24.0
+
+# ============================================================================
+# INSTRUÇÕES DE INSTALAÇÃO
+# ============================================================================
+# Para instalar todas as dependências:
+#   pip install -r requirements.txt
+#
+# Para instalar apenas essenciais (sem API do Twitter):
+#   pip install pandas numpy matplotlib seaborn plotly nltk wordcloud openpyxl geopandas folium
+#
+# Para habilitar coleta do Twitter/X:
+#   pip install tweepy snscrape
+#
+# Para análise de sentimento avançada com BERT:
+#   pip install transformers spacy
+#   python -m spacy download pt_core_news_sm
+# ============================================================================
